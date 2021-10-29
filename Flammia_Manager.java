@@ -226,6 +226,7 @@ public class Flammia_Manager{
 			//TA pipes
 			pos1 = new PipedOutputStream();
 			pis1 = new PipedInputStream(pos1);
+			
 			//TB pipes
 			pos2 = new PipedOutputStream();
 			pis2 = new PipedInputStream(pos2);
