@@ -5,12 +5,14 @@ class Flammia_TA extends Thread{
 	private InputStream PrimIS;
 	private OutputStream PrimOS;
 	//obj
+	private InputStream ObjPipeIS;
 	private ObjectInputStream ObjIS;
 	//constructor
-	public Flammia_TA(InputStream PrimIS, OutputStream PrimOS, ObjectInputStream ObjIS){
+	public Flammia_TA(InputStream PrimIS, OutputStream PrimOS, ObjectInputStream ObjIS, InputStream ObjPipeIS){
 		this.PrimIS = PrimIS;
 		this.PrimOS = PrimOS;
 		this.ObjIS = ObjIS;
+		this.ObjPipeIS = ObjPipeIS;
 	}
 	private void send() throws Exception{
 		System.out.println("TA is Sending");
@@ -57,7 +59,7 @@ class Flammia_TA extends Thread{
 	private void receiveObject(){
 		System.out.println("TA is Receiving an Object");
 		try{
-			this.ObjIS = new ObjectInputStream(this.PrimIS);
+			this.ObjIS = new ObjectInputStream(this.ObjPipeIS);
 			Flammia_Message m = (Flammia_Message)this.ObjIS.readObject();
 			System.out.println("TA Received Object: " + m);
 		}
@@ -85,12 +87,14 @@ class Flammia_TB extends Thread{
 	private InputStream PrimIS;
 	private OutputStream PrimOS;
 	//obj
+	private InputStream ObjPipeIS;
 	private ObjectInputStream ObjIS;
 	//constructor
-	public Flammia_TB(InputStream PrimIS, OutputStream PrimOS, ObjectInputStream ObjIS){
+	public Flammia_TB(InputStream PrimIS, OutputStream PrimOS, ObjectInputStream ObjIS, InputStream ObjPipeIS){
 		this.PrimIS = PrimIS;
 		this.PrimOS = PrimOS;
 		this.ObjIS = ObjIS;
+		this.ObjPipeIS = ObjPipeIS;
 	}
 	private void send() throws Exception{
 		System.out.println("TB is Sending");
@@ -137,7 +141,7 @@ class Flammia_TB extends Thread{
 	private void receiveObject(){
 		System.out.println("TB is Receiving an Object");
 		try{
-			this.ObjIS = new ObjectInputStream(this.PrimIS);
+			this.ObjIS = new ObjectInputStream(this.ObjPipeIS);
 			Flammia_Message m = (Flammia_Message)this.ObjIS.readObject();
 			System.out.println("TB Received Object: " + m);
 		}
@@ -186,7 +190,7 @@ class Flammia_TC extends Thread{
 	}
 	public void run(){
 		try{
-			System.out.println("TB has started execution");
+			System.out.println("TC has started execution");
 			this.send();
 		}
 		catch(Exception e){
@@ -216,6 +220,13 @@ public class Flammia_Manager{
 	//TB output
 	static private PipedOutputStream pos2;
 	
+	//TC communications
+	static private PipedInputStream pis12;
+	static private PipedInputStream pis22;
+	static private PipedOutputStream pos12;
+	static private PipedOutputStream pos22;
+	
+	//Object Streams
 	static private ObjectInputStream ois;
 	static private ObjectOutputStream oos;
 	
@@ -231,13 +242,18 @@ public class Flammia_Manager{
 			pos2 = new PipedOutputStream();
 			pis2 = new PipedInputStream(pos2);
 			
+			//TC pipes
+			pos12 = new PipedOutputStream();
+			pos22 = new PipedOutputStream();
+			pis12 = new PipedInputStream(pos12);
+			pis22 = new PipedInputStream(pos22);
+			
 			System.out.println("Thread creation");
-			Flammia_TA TA = new Flammia_TA(pis2, pos1, ois);
-			Flammia_TB TB = new Flammia_TB(pis1, pos2, ois);
-			Flammia_TC TC = new Flammia_TC(pos2, pos1, oos);
+			Flammia_TA TA = new Flammia_TA(pis2, pos1, ois, pis22);
+			Flammia_TB TB = new Flammia_TB(pis1, pos2, ois, pis12);
+			Flammia_TC TC = new Flammia_TC(pos22, pos12, oos);
 			
 			System.out.println("Thread execution");
-			
 			TA.start(); 
 			TB.start();
 			TC.start();
